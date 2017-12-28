@@ -83,21 +83,28 @@ class DecisionTree:
         entropy = 0
         entity_number = len(data_set) * 1.0
         for key, value in class_count:
-            possibility = value * 1.0 / entity_number
-            entropy += -1 * possibility * log2(possibility)
+            # possibility = value * 1.0 / entity_number
+            entropy += self.__calculate_entropy_item__(value, entity_number)  # -1 * possibility * log2(possibility)
             
         return entropy
+    
+    def __calculate_entropy_item__(self, denominator, numerator):
+        possibility = denominator * 1.0 / numerator
+        return -1 * possibility * log2(possibility)
     
     def __calculate_gain__(self, data_set, feature_index):
         unique_feature_values = set([feature[feature_index] for feature in data_set])
         total_entropy = self.__calculate_entropy__(data_set)
         sub_entropy = 0
         conditional_entropy = 0
+        total_items = len(data_set)
         for feature_value in unique_feature_values:
             sub_data_set = self.__filter_data_set__(data_set, feature_index, feature_value)
             temp_sub_entropy = self.__calculate_entropy__(sub_data_set)
-            sub_entropy += temp_sub_entropy
-            conditional_entropy += len(sub_data_set) * 1.0 / len(data_set) * temp_sub_entropy
+            sub_items_count = len(sub_data_set)
+            sub_entropy += self.__calculate_entropy_item__(sub_items_count, total_items)  # temp_sub_entropy
+            conditional_entropy += self.__calculate_entropy_item__(sub_items_count, total_items) * temp_sub_entropy
+        
         gain = self.__calculate_info_gain_ratio_core__(total_entropy, sub_entropy, conditional_entropy)
         return gain
     
