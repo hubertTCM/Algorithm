@@ -1,12 +1,13 @@
 from math import log2
+import operator
 
 
 class TreeNode:
 
-    def __init__(self, label):
+    def __init__(self, label=None, value=None):
         self.__label__ = label
         self.__children__ = {}  # value: TreeNode
-        self.__value__ = None
+        self.__value__ = value
         
     def add_child(self, value, child):
         self.__children__[value] = child
@@ -19,22 +20,23 @@ class DecisionTree:
         self.__create_tree__(data_set, labels)
         
     def __create_tree__(self, data_set, labels):
-        if (len(data_set[0]) == 1):
-            return None  # TODO: create tree node here
-                
         class_list = [item[-1] for item in data_set]
-        first_class = class_list[0]
-        is_same_class = True
+                
+        class_count = {}
         for item in class_list:
-            if (item != first_class):
-                is_same_class = False
-                break
-        if (is_same_class):
-            return None  # TODO:
+            if (item not in class_count):
+                class_count[item] = 1
+            else:
+                class_count[item] += 1
+        
+        sorted_class_count = sorted(class_list, operator.itemgetter(1), reverse=True)
+        if (len(sorted_class_count) == 1 or len(data_set[0]) == 1):
+            first_class = sorted_class_count[0][0]
+            return TreeNode(None, first_class)
         
         feature_index = self.__find_best_feature_index__(data_set)
         label = labels[feature_index]
-        node = TreeNode(label)
+        node = TreeNode(label, None)
         if (self.__root__ is None):
             self.__root__ = node            
         
@@ -45,6 +47,7 @@ class DecisionTree:
             sub_tree = self.__filter_data_set__(data_set, feature_index, feature_value)
             child = self.__create_tree__(sub_tree, sub_labels)
             node.add_child(feature_value, child)       
+        return node
         
     def __filter_data_set__(self, data_set, feature_index, value):
         result = []
