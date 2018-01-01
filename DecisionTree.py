@@ -122,8 +122,6 @@ class DecisionTree:
         for feature_value in unique_feature_values:
             sub_data_set = self.__filter_data_set__(data_set, feature_index, feature_value)
             temp_sub_entropy = self.__calculate_entropy__(sub_data_set)
-            if (temp_sub_entropy < 0.001):
-                temp_sub_entropy = self.__calculate_entropy__(sub_data_set)
             
             sub_items_count = len(sub_data_set)
             temp_float = self.__calculate_float__(sub_items_count, total_items)
@@ -131,7 +129,7 @@ class DecisionTree:
             conditional_entropy += temp_float * temp_sub_entropy
             sub_entropy += temp_sub_entropy
         
-        # gain = self.__calculate_info_gain_ratio_core__(total_entropy, sub_entropy, conditional_entropy)
+        #gain = self.__calculate_info_gain_ratio_core__(total_entropy, sub_entropy, conditional_entropy)
         gain = self.__calculate_info_gain_core__(total_entropy, sub_entropy, conditional_entropy)
         return gain
     
