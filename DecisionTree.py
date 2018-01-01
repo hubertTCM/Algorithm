@@ -1,4 +1,4 @@
-from math import log2
+from math import log
 from collections import OrderedDict
 import json
 
@@ -15,11 +15,10 @@ class TreeNode(object):
         
     def get_export_values(self):
         
-        result = {'label': self.__label__}
         if (len(self.__children__) == 0):
-            result['value'] = self.__value__
-            return result
+            return {'value': self.__value__}
         
+        result = {'label': self.__label__}
         child_property = []
         for value, child in self.__children__.items():
             child_property.append((value, child.get_export_values()))
@@ -31,7 +30,7 @@ class DecisionTree:
 
     def __init__(self, data_set, labels):
         self.__root__ = None    
-        self.__create_tree__(data_set, labels)
+        self.__root__ = self.__create_tree__(data_set, labels)
         
     @property
     def root(self):
@@ -48,14 +47,12 @@ class DecisionTree:
                 sorted_class_count[item] += 1
         
         if (len(sorted_class_count) == 1 or len(data_set[0]) == 1):
-            first_class = next(reversed(sorted_class_count))[0]
+            first_class = next(reversed(sorted_class_count))
             return TreeNode(None, first_class)
         
         feature_index = self.__find_best_feature_index__(data_set)
         label = labels[feature_index]
-        node = TreeNode(label, None)
-        if (self.__root__ is None):
-            self.__root__ = node            
+        node = TreeNode(label, None)        
         
         sub_labels = labels[: feature_index]
         sub_labels.extend(labels[feature_index + 1 : ])    
@@ -82,12 +79,14 @@ class DecisionTree:
         best_feature_gain = -1
         for i in range(feature_count):
             gain = self.__calculate_gain__(data_set, i)
+            # print("gain:" + str(gain) + " i:" + str(i))
             if (gain < 0):
                 continue
-            if (best_feature_gain < 0 or gain < best_feature_gain):
+            if (best_feature_gain < 0 or gain > best_feature_gain):
                 best_feature_gain = gain
                 best_feature_index = i
             
+        # print("best_feature_index:" + str(best_feature_index) + " len(data_set):" + str(len(data_set)) + " best_feature_gain:" + str(best_feature_gain))
         return best_feature_index
     
     def __calculate_entropy__(self, data_set):
@@ -104,13 +103,15 @@ class DecisionTree:
         entity_number = len(data_set) * 1.0
         for key, value in class_count.items():
             # possibility = value * 1.0 / entity_number
-            entropy += self.__calculate_entropy_item__(value, entity_number)  # -1 * possibility * log2(possibility)
-            
+            entropy += self.__calculate_entropy_item__(value, entity_number)  # -1 * possibility * log2(possibility)            
         return entropy
     
+    def __calculate_float__(self, denominator, numerator):
+        return float(denominator) / float(numerator)
+    
     def __calculate_entropy_item__(self, denominator, numerator):
-        possibility = denominator * 1.0 / numerator
-        return -1 * possibility * log2(possibility)
+        possibility = self.__calculate_float__(denominator, numerator)
+        return -1 * possibility * log(possibility, 2)
     
     def __calculate_gain__(self, data_set, feature_index):
         unique_feature_values = set([feature[feature_index] for feature in data_set])
@@ -121,16 +122,24 @@ class DecisionTree:
         for feature_value in unique_feature_values:
             sub_data_set = self.__filter_data_set__(data_set, feature_index, feature_value)
             temp_sub_entropy = self.__calculate_entropy__(sub_data_set)
+            if (temp_sub_entropy < 0.001):
+                temp_sub_entropy = self.__calculate_entropy__(sub_data_set)
+            
             sub_items_count = len(sub_data_set)
-            sub_entropy += self.__calculate_entropy_item__(sub_items_count, total_items)  # temp_sub_entropy
-            conditional_entropy += self.__calculate_entropy_item__(sub_items_count, total_items) * temp_sub_entropy
+            temp_float = self.__calculate_float__(sub_items_count, total_items)
+            # print(feature_value + " temp_sub_entropy:" + str(temp_sub_entropy) + " sub_items_count:" + str(sub_items_count) + " total_items:" + str(total_items) + " temp_float:" + str(temp_float))
+            conditional_entropy += temp_float * temp_sub_entropy
+            sub_entropy += temp_sub_entropy
         
-        #gain = self.__calculate_info_gain_ratio_core__(total_entropy, sub_entropy, conditional_entropy)
+        # gain = self.__calculate_info_gain_ratio_core__(total_entropy, sub_entropy, conditional_entropy)
         gain = self.__calculate_info_gain_core__(total_entropy, sub_entropy, conditional_entropy)
         return gain
     
-    def __calculate_info_gain_core__(self, total_entropy, sub_entropy, conditional_entropy):
-        return total_entropy - conditional_entropy
+    def __calculate_info_gain_core__(self, total_entropy, sub_entropy, conditional_entropy):        
+        # print("total_entropy:" + str(total_entropy) + " sub_entropy:" + str(sub_entropy) + " conditional_entropy:" + str(conditional_entropy))
+        result = total_entropy - conditional_entropy 
+        # print("result:" + str(result))
+        return result
     
     def __calculate_info_gain_ratio_core__(self, total_entropy, sub_entropy, conditional_entropy):
         return self.__calculate_info_gain_core__(total_entropy, sub_entropy, conditional_entropy) / sub_entropy
