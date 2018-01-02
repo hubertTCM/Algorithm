@@ -116,7 +116,7 @@ class DecisionTree:
     def __calculate_gain__(self, data_set, feature_index):
         unique_feature_values = set([feature[feature_index] for feature in data_set])
         total_entropy = self.__calculate_entropy__(data_set)
-        sub_entropy = 0
+        iv = 0
         conditional_entropy = 0
         total_items = len(data_set)
         for feature_value in unique_feature_values:
@@ -127,10 +127,10 @@ class DecisionTree:
             temp_float = self.__calculate_float__(sub_items_count, total_items)
             # print(feature_value + " temp_sub_entropy:" + str(temp_sub_entropy) + " sub_items_count:" + str(sub_items_count) + " total_items:" + str(total_items) + " temp_float:" + str(temp_float))
             conditional_entropy += temp_float * temp_sub_entropy
-            sub_entropy += temp_sub_entropy
+            iv += self.__calculate_entropy_item__(sub_items_count, total_items)
         
-        #gain = self.__calculate_info_gain_ratio_core__(total_entropy, sub_entropy, conditional_entropy)
-        gain = self.__calculate_info_gain_core__(total_entropy, sub_entropy, conditional_entropy)
+        #gain = self.__calculate_info_gain_ratio_core__(total_entropy, iv, conditional_entropy)
+        gain = self.__calculate_info_gain_core__(total_entropy, iv, conditional_entropy)
         return gain
     
     def __calculate_info_gain_core__(self, total_entropy, sub_entropy, conditional_entropy):        
@@ -139,8 +139,8 @@ class DecisionTree:
         # print("result:" + str(result))
         return result
     
-    def __calculate_info_gain_ratio_core__(self, total_entropy, sub_entropy, conditional_entropy):
-        return self.__calculate_info_gain_core__(total_entropy, sub_entropy, conditional_entropy) / sub_entropy
+    def __calculate_info_gain_ratio_core__(self, total_entropy, iv, conditional_entropy):
+        return self.__calculate_info_gain_core__(total_entropy, iv, conditional_entropy) / iv
 
 
 if __name__ == "__main__":
